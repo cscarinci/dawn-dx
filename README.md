@@ -1,3 +1,52 @@
+# Dawn
+
+My custom image of Aurora, with dinosaurs included.
+
+
+## Instructions
+
+From an existing Fedora Atomic/Universal Blue installation, switch to this image with:
+
+```bash
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/cscarinci/dawn:latest
+```
+
+Or, generate an iso file with [BlueBuild](https://github.com/blue-build/cli/):
+
+```bash
+sudo bluebuild generate-iso --iso-name dawn.iso image ghcr.io/cscarinci/dawn
+```
+
+To build a new custom image, use the [Universal Blue image template](https://github.com/ublue-os/image-template). Important initial steps:
+
+1. Clone your git repository
+2. Sign the image
+```bash
+cosign generate-key-pair
+gh secret set SIGNING_SECRET < cosign.key
+```
+3. Commit the `cosign.pub` file
+4. Edit the `Containerfile` and `build_files/build.sh` files
+
+## TODO
+- Manage flatpaks
+- Customize the `Justfile`
+- Fix build ISO workflow
+
+## Acknowledgments
+
+This project is based on the [Universal Blue image template](https://github.com/ublue-os/image-template), with inspiration from the Universal Blue community.
+
+References:
+- [Aurora](https://github.com/ublue-os/aurora)
+- [Bluefin](https://github.com/ublue-os/bluefin)
+- [Universal Blue image template](https://github.com/ublue-os/image-template)
+- [Cosign CLI tool](https://edu.chainguard.dev/open-source/sigstore/cosign/how-to-install-cosign/#installing-cosign-with-the-cosign-binary)
+- [BlueBuild cli](https://github.com/blue-build/cli)
+- [Amy OS](https://github.com/astrovm/amyos)
+- [VeneOS](https://github.com/Venefilyn/veneos)
+
+
 # image-template
 
 # Purpose

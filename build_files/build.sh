@@ -2,23 +2,37 @@
 
 set -ouex pipefail
 
-### Install packages
+dnf5 -y remove aurora-plymouth aurora-backgrounds aurora-cli-logos aurora-fastfetch kcm_ublue
 
-# Packages can be installed from any enabled yum repo on the image.
-# RPMfusion repos are available by default in ublue main images
-# List of rpmfusion packages can be found here:
-# https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
+dnf5 -y swap --repo=copr:copr.fedorainfracloud.org:ublue-os:packages aurora-logos bluefin-logos
 
-# this installs a package from fedora repos
-dnf5 install -y tmux 
+dnf5 -y install --repo=copr:copr.fedorainfracloud.org:ublue-os:packages bluefin-backgrounds bluefin-cli-logos bluefin-fastfetch bluefin-plymouth
 
-# Use a COPR Example:
-#
-# dnf5 -y copr enable ublue-os/staging
-# dnf5 -y install package
-# Disable COPRs so they don't end up enabled on the final image:
-# dnf5 -y copr disable ublue-os/staging
+dnf5 -y install papirus-icon-theme
 
-#### Example for enabling a System Unit File
+ln -sf /usr/share/icons/Papirus/64x64/apps/start-here-fedora.svg /usr/share/icons/hicolor/scalable/apps/start-here.svg
 
-systemctl enable podman.socket
+ln -sf /usr/share/backgrounds/bluefin/08-bluefin-day.jxl /usr/share/backgrounds/default.png
+ln -sf /usr/share/backgrounds/bluefin/08-bluefin-night.jxl /usr/share/backgrounds/default-dark.png
+
+ln -sf /usr/share/backgrounds/bluefin/11-bluefin.xml /usr/share/backgrounds/default.xml
+
+# /usr/share/sddm/themes/01-breeze-fedora/theme.conf uses default.jxl for the background
+ln -sf /usr/share/backgrounds/bluefin/10-bluefin-day.jxl /usr/share/backgrounds/default.jxl
+ln -sf /usr/share/backgrounds/bluefin/10-bluefin-night.jxl /usr/share/backgrounds/default-dark.jxl
+
+sed -i '/<entry name="launchers" type="StringList">/,/<\/entry>/ s/<default>[^<]*<\/default>/<default>applications:systemsettings.desktop,applications:org.kde.dolphin.desktop,applications:kitty.desktop,applications:emacs.desktop<\/default>/' /usr/share/plasma/plasmoids/org.kde.plasma.taskmanager/contents/config/main.xml
+
+sed -i '/<entry name="favorites" type="StringList">/,/<\/entry>/ s/<default>[^<]*<\/default>/<default>applications:systemsettings.desktop,applications:org.kde.dolphin.desktop,applications:org.gnome.Ptyxis.desktop,applications:kitty.desktop,applications:emacs.desktop,applications:org.kde.kate.desktop,applications:io.github.dvlv.boxbuddyrs.desktop,applications:org.kde.kdeconnect.app.desktop,applications:firewall-config.desktop<\/default>/' /usr/share/plasma/plasmoids/org.kde.plasma.kickoff/contents/config/main.xml
+
+dnf5 -y install emacs zathura zathura-plugins-all kitty neovim gh
+
+dnf5 -y install fira-code-fonts baekmuk-bdf-fonts baekmuk-batang-fonts adobe-source-han-sans-kr-fonts adobe-source-han-serif-kr-fonts google-noto-sans-cjk-fonts google-noto-serif-cjk-fonts google-noto-sans-cjk-vf-fonts google-noto-serif-cjk-vf-fonts google-roboto-fonts google-roboto-mono-fonts
+
+fc-cache -fv
+
+KERNEL_SUFFIX=""
+
+QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//')"
+/usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
+chmod 0600 "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"

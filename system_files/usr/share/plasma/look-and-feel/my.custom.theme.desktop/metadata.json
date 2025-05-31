@@ -1,0 +1,23 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "",
+                "Name": "cscarinci"
+            }
+        ],
+        "Category": "",
+        "Description": "Dawn - Theme variant of Aurora & KDE BreezeDark",
+        "Id": "my.custom.theme.desktop",
+        "License": "GPLv2+",
+        "Name": "Dawn",
+        "ServiceTypes": [
+            "Plasma/LookAndFeel"
+        ],
+        "Version": "0.1",
+        "Website": ""
+    },
+    "X-KDE-ParentApp": "",
+    "X-Plasma-MainScript": "defaults"
+}

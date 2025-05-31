@@ -31,3 +31,22 @@ dawn-manage-flatpaks:
   flatpak uninstall --unused -y
 
   echo "=== Update complete! ==="
+
+# Generate ISO file
+dawn-generate-iso:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  # Check if bluebuild is already installed
+  if ! command -v bluebuild &> /dev/null; then
+    echo "Installing bluebuild..."
+    podman run --pull always --rm ghcr.io/blue-build/cli:latest-installer | bash
+  else
+    echo "bluebuild is already installed"
+  fi
+
+  # Generate ISO name with current date in YYYYMMDDHHMM format
+  ISO_NAME="dawn-$(date +'%Y%m%d%H%M').iso"
+
+  echo "Generating ISO: ${ISO_NAME}"
+  sudo bluebuild generate-iso --iso-name "${ISO_NAME}" image ghcr.io/cscarinci

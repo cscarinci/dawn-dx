@@ -1,6 +1,6 @@
 # Dawn
 
-My custom image of Aurora, with dinosaurs included.
+My custom image of Aurora, with dinosaurs included. Now with dev tools.
 
 
 ## Instructions

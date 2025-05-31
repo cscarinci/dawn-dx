@@ -3,6 +3,10 @@ dawn-manage-flatpaks:
   #!/usr/bin/env bash
   set -euo pipefail
 
+  # Ensure Flathub remote exists
+  echo "=== Setting Up Flathub ==="
+  flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
   # Config paths (adjust as needed)
   FLATPAK_INSTALL_LIST="$HOME/.config/flatpak_install"
 

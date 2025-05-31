@@ -32,3 +32,7 @@ runtime/org.gtk.Gtk3theme.Breeze
 app/io.github.pwr_solaar.solaar
 app/org.gustavoperedo.FontDownloader
 app/org.kde.skanpage
+app/io.podman_desktop.PodmanDesktop
+app/io.github.getnf.embellish
+app/me.iepure.devtoolbox
+app/sh.loft.devpod

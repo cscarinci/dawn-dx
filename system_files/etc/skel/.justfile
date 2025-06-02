@@ -1,56 +1,65 @@
-# Update, install new, and remove unwanted Flatpaks
-dawn-manage-flatpaks:
-  #!/usr/bin/env bash
-  set -euo pipefail
+# Justfile for dawn-dx post-install setup
 
-  # Ensure Flathub remote exists
-  echo "=== Setting Up Flathub ==="
-  flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+set dotenv-load := true
+set shell := ["bash", "-cu"]
 
-  # Config paths (adjust as needed)
-  FLATPAK_INSTALL_LIST="$HOME/.config/flatpak_install"
+# Run everything
+default:
+    just --list
 
-  # Check if files exist
-  if [[ ! -f "$FLATPAK_INSTALL_LIST" ]]; then
-    echo "Error: Install list not found at '$FLATPAK_INSTALL_LIST'"
-    exit 1
-  fi
+setup-dawn-dx
+    just setup-flatpak
+    just setup-ssh
+    just clone-repos
+    just setup-emacs
+    just build-iso
 
-  echo "=== Updating Flatpaks ==="
-  
-  # Install Flatpaks
-  if [[ -s "$FLATPAK_INSTALL_LIST" ]]; then
-    echo "Installing Flatpaks..."
-    xargs -a "$FLATPAK_INSTALL_LIST" flatpak --system -y install
-  else
-    echo "No Flatpaks to install."
-  fi
+# Add flathub and install Zen browser
+setup-flatpak:
+    flatpak remote-list | grep -q flathub || \
+        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    if [[ -f "$HOME/Repos/flatpak_install" ]]; then \
+        xargs -a "$HOME/Repos/flatpak_install" -r flatpak --system -y install; \
+    fi
 
-  # Update Flatpaks
-  echo "Updating Flatpaks..."
-  flatpak update -y
+# Generate SSH key and add to agent
+setup-ssh:
+    if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then \
+        ssh-keygen -t ed25519 -C "{{EMAIL}}" -N "" -f "$HOME/.ssh/id_ed25519"; \
+    fi
+    if [ -z "$$SSH_AUTH_SOCK" ] || ! ssh-add -l >/dev/null 2>&1; then \
+        eval "$$(ssh-agent -s)"; \
+    fi
+    fingerprint=$$(ssh-keygen -lf "$$HOME/.ssh/id_ed25519.pub" | awk '{print $$2}')
+    ssh-add -l | grep -q "$$fingerprint" || ssh-add "$$HOME/.ssh/id_ed25519"
 
-  # Clean up unused runtimes
-  echo "Cleaning dependencies..."
-  flatpak uninstall --unused -y
-
-  echo "=== Update complete! ==="
-
-# Generate ISO file
-dawn-generate-iso:
-  #!/usr/bin/env bash
-  set -euo pipefail
-
-  # Check if bluebuild is already installed
-  if ! command -v bluebuild &> /dev/null; then
-    echo "Installing bluebuild..."
-    podman run --pull always --rm ghcr.io/blue-build/cli:latest-installer | bash
-  else
-    echo "bluebuild is already installed"
-  fi
-
-  # Generate ISO name with current date in YYYYMMDDHHMM format
-  ISO_NAME="dawn-$(date +'%Y%m%d%H%M').iso"
-
-  echo "Generating ISO: ${ISO_NAME}"
-  sudo bluebuild generate-iso --iso-name "${ISO_NAME}" image ghcr.io/cscarinci/dawn-dx
+# Clone repos and install Flatpaks from flatpaks.d
+clone-repos:
+    if ! gh auth status &>/dev/null; then \
+       gh auth login -h github.com -w; \
+    fi
+    if [[ "$$(gh api user --jq .login)" = "{{USERNAME}}" ]]
+        gh repo clone {{USERNAME}}/emacs.d ~/Repos/emacs.d; \
+        gh repo clone {{USERNAME}}/nvim.d ~/Repos/nvim.d; \
+        gh repo clone {{USERNAME}}/org.d ~/Repos/org.d; \
+        gh repo clone {{USERNAME}}/scripts.d ~/Repos/scripts.d; \
+        gh repo clone {{USERNAME}}/texmf.d ~/Repos/texmf.d; \
+    if
+    
+# Clone Emacs config and enable Emacs daemon
+setup-emacs:
+    if [[ -d ~/Repos/emacs.d ]]; then \
+        rm -rf ~/.emacs ~/.emacs.d; \
+        git clone https://github.com/jamescherti/minimal-emacs.d.git ~/.emacs.d; \
+        ln -sf ~/Repos/emacs.d/* ~/.emacs.d; \
+        if ! systemctl --user is-enabled emacs.service >/dev/null 2>&1; then \
+            systemctl --user enable emacs.service; \
+        fi; \
+        if ! systemctl --user is-active emacs.service >/dev/null 2>&1; then \
+            systemctl --user start emacs.service; \
+        fi; \
+    fi
+    
+# Generate custom BlueBuild ISO
+build-iso:
+    sudo bluebuild generate-iso --iso-name {{IMAGE}}.iso image ghcr.io/{{USERNAME}}/{{IMAGE}}

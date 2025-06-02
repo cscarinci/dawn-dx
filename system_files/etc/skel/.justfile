@@ -53,4 +53,4 @@ dawn-generate-iso:
   ISO_NAME="dawn-$(date +'%Y%m%d%H%M').iso"
 
   echo "Generating ISO: ${ISO_NAME}"
-  sudo bluebuild generate-iso --iso-name "${ISO_NAME}" image ghcr.io/cscarinci
+  sudo bluebuild generate-iso --iso-name "${ISO_NAME}" image ghcr.io/cscarinci/dawn-dx
